@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Ultimate Battle</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Bangers', cursive;
+  overflow: hidden;
+  color: #ff2b2b;
+}
+
+h1 {
+  color: #ff2b2b;
+  text-shadow: 0 0 10px black;
+}
+
+.hp {
+  color: #ff3b3b;
+}
+
+/* BACKGROUND */
+.bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url("bg.jpg") center/cover no-repeat;
+  z-index: 0;
+}
+
+/* DARK OVERLAY */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: black;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 999;
+  transition: opacity 0.12s ease;
+}
+
+.overlay.red {
+  background: red;
+}
+
+/* MAIN CONTENT */
+.container {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding-top: 40px;
+}
+
+/* TITLE */
+h1 {
+  font-size: 40px;
+}
+
+/* CHARACTERS AREA */
+.scene {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px; /* VERY CLOSE */
+  margin-top: 70px;
+}
+
+.char-box {
+  text-align: center;
+}
+
+.char {
+  width: 160px;
+}
+
+/* HP TEXT */
+.hp {
+  margin-top: 10px;
+  font-size: 18px;
+}
+
+/* BUTTON */
+button {
+  padding: 12px 25px;
+  font-size: 18px;
+  margin-top: 30px;
+  cursor: pointer;
+}
+
+/* COUNTDOWN */
+#log {
+  font-size: 60px;
+  margin-top: 40px;
+}
+
+.hitEmoji {
+  position: fixed;
+  font-size: 40px;
+  animation: pop 0.4s ease-out;
+  pointer-events: none;
+  z-index: 999;
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.5);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+#winnerBubble {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+
+  background: white;
+  color: #ff2b2b;
+
+  padding: 12px 16px;
+  border-radius: 14px;
+
+  font-family: 'Bangers', cursive;
+  font-size: 20px;
+
+  box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.4s ease;
+
+  z-index: 1000;
+}
+
+.confetti {
+  position: fixed;
+  width: 8px;
+  height: 14px;
+  top: -20px;
+  opacity: 0.9;
+  animation: fall linear forwards;
+  z-index: 1000;
+}
+
+@keyframes fall {
+  to {
+    transform: translateY(110vh) rotate(720deg);
+  }
+}
+
+.raindrop {
+  position: fixed;
+  font-size: 30px;
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.5s ease;
+  z-index: 1001;
+}
+
+/* ================= VS SCREEN BASE ================= */
+#vsScreen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  overflow: hidden;
+  font-family: 'Bangers', cursive;
+  opacity: 1;
+  pointer-events: none;
+  transition: opacity 0.8s ease;
+}
+
+/* split sides */
+.side {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.8s cubic-bezier(0.7, 0, 0.2, 1);
+}
+
+.red {
+  background: #ff2b2b;
+  left: 0;
+  transform: skew(-20deg) translateX(-50%);
+}
+
+.blue {
+  background: #2b6bff;
+  right: 0;
+  transform: skew(-20deg) translateX(50%);
+}
+
+/* VS center text */
+.vsText {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 90px;
+  color: white;
+  text-shadow: 0 0 20px black;
+}
+
+/* side labels */
+.leftText, .rightText {
+  position: absolute;
+  font-size: 40px;
+  color: white;
+  text-shadow: 0 0 15px black;
+}
+
+.leftText {
+  top: 35%;
+  left: 18%;
+  transform: translateX(-50%);
+}
+
+.rightText {
+  top: 35%;
+  right: 18%;
+   transform: translateX(50%);
+}
+
+/* ================= ANIMATION ================= */
+
+/* smooth movement */
+.side {
+  transition: transform 0.6s ease;
+}
+
+#vsScreen {
+  transition: opacity 0.6s ease;
+}
+
+/* exit animation */
+.fadeOut .red {
+  transform: skew(-20deg) translateX(-150%);
+}
+
+.fadeOut .blue {
+  transform: skew(-20deg) translateX(150%);
+}
+
+.fadeOut {
+  opacity: 0;
+}
+
+#soundToggle {
+  position: fixed;
+  bottom: 25px;
+  left: 25px;
+
+  background: rgba(0,0,0,0.65);
+  color: white;
+
+  padding: 14px 20px;
+  border-radius: 30px;
+
+  font-size: 18px; /* bigger text */
+  font-family: 'Bangers', cursive;
+  letter-spacing: 1px;
+
+  cursor: pointer;
+  z-index: 2000;
+
+  backdrop-filter: blur(8px);
+
+  box-shadow: 0 0 15px rgba(0,0,0,0.4);
+
+  transition: all 0.25s ease;
+}
+
+#soundToggle:hover {
+  transform: scale(1.12);
+  background: rgba(0,0,0,0.85);
+  box-shadow: 0 0 20px rgba(255,255,255,0.3);
+}
+
+@keyframes glowPulse {
+  0% { box-shadow: 0 0 10px rgba(255,255,255,0.2); }
+  50% { box-shadow: 0 0 25px rgba(255,255,255,0.5); }
+  100% { box-shadow: 0 0 10px rgba(255,255,255,0.2); }
+}
+
+#soundToggle {
+  animation: glowPulse 2s infinite;
+}
+
+.vsText,
+.leftText,
+.rightText {
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+/* when intro exits */
+.fadeOut .vsText {
+  opacity: 0;
+  transform: translate(-50%, -60%) scale(0.9);
+}
+
+.fadeOut .leftText {
+  opacity: 0;
+  transform: translateX(-80px);
+}
+
+.fadeOut .rightText {
+  opacity: 0;
+  transform: translateX(80px);
+}
+
+#blackFade {
+  position: fixed;
+  inset: 0;
+  background: black;
+
+  opacity: 0;
+  pointer-events: none;
+
+  z-index: 5000;
+
+  transition: opacity 1.5s ease;
+}	
+
+#storyText {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  color: white;
+  font-size: 32px;
+  font-family: 'Bangers', cursive;
+  text-align: center;
+
+  opacity: 0;
+  transition: opacity 0.6s ease;
+
+  z-index: 6000;
+  width: 80%;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="blackFade"></div>
+<div id="storyText"></div>
+
+<div id="soundToggle">🔊 Tap for Sound</div>
+
+<div id="vsScreen">
+  <div class="side red"></div>
+  <div class="side blue"></div>
+
+  <div class="vsText">VS</div>
+
+  <div class="leftText">ANDROID BEAST</div>
+  <div class="rightText">IPHONE WARRIOR</div>
+</div>
+
+<video id="awkwardSound" src="awkward.mp4" preload="auto" style="display:none;"></video>
+
+<div class="bg"></div>
+<div class="overlay" id="overlay"></div>
+<div id="winnerBubble">and the winner is...</div>
+
+<div class="container">
+
+  <h1>ULTIMATE BATTLE</h1>
+
+  <div class="scene">
+
+    <div class="char-box">
+      <img class="char" id="android" src="android.png">
+      <div class="hp">HP: <span id="hp1">100</span></div>
+    </div>
+
+    <div class="char-box">
+      <img class="char" id="iphone" src="iphone.png">
+      <div class="hp">HP: <span id="hp2">100</span></div>
+    </div>
+
+  </div>
+
+  <div id="log"></div>
+
+</div>
+
+<script>
+let introDone = false;
+
+let hp1 = 100;
+let hp2 = 100;
+let interval = null;
+
+function startBattle() {
+  let count = 3;
+
+  let timer = setInterval(() => {
+    document.getElementById("log").innerText = count;
+    count--;
+
+    if (count < 0) {
+      clearInterval(timer);
+      runBattle();
+    }
+  }, 800);
+}
+
+function runBattle() {
+  interval = setInterval(() => {
+    attack();
+  }, 900);
+}
+
+function attack() {
+
+  let isCrit = Math.random() < 0.2; // 20% crit chance
+ 
+  hitFX(isCrit);
+flashScreen(isCrit);
+
+  let dmg1 = Math.floor(Math.random() * 20) + 10;
+  let dmg2 = Math.floor(Math.random() * 15) + 5;
+
+  hp1 = Math.max(0, hp1 - dmg1);
+  hp2 = Math.max(0, hp2 - dmg2);
+
+  document.getElementById("hp1").innerText = hp1;
+  document.getElementById("hp2").innerText = hp2;
+
+  document.getElementById("log").innerText =
+    isCrit ? "CRITICAL HIT!" : "HIT!";
+
+
+  if (hp1 <= 0 || hp2 <= 0) {
+    clearInterval(interval);
+    document.getElementById("log").innerText =
+      hp1 <= 0 ? "IPHONE WINS" : "ANDROID WINS 🤖";
+
+  setTimeout(() => {
+    showWinnerBubble(
+      hp1 <= 0
+        ? "and the winner is... iPhone 🍎"
+        : "and the winner is... Android 🤖"
+    );
+  }, 800);
+}
+}
+
+/* FLASH SYSTEM */
+function flashScreen(isCrit) {
+  let overlay = document.getElementById("overlay");
+
+  // reset state every time (VERY IMPORTANT)
+  overlay.classList.remove("red");
+
+  if (isCrit) {
+    overlay.classList.add("red");
+  }
+
+  // show flash
+  overlay.style.opacity = "1";
+
+  // hide flash
+  setTimeout(() => {
+    overlay.style.opacity = "0";
+  }, 120);
+}
+
+let audio = new Audio("boom.mp3");
+audio.preload = "auto";
+
+
+function playBoom() {
+  audio.pause();
+  audio.currentTime = 0;
+  if (soundEnabled) audio.play().catch(() => {
+    // prevents crash if browser blocks autoplay
+  });
+}
+
+let crowd = new Audio("crowd.mp3");
+crowd.preload = "auto";
+
+function playCrowd() {
+  crowd.currentTime = 0;
+  crowd.volume = 0.7;
+  crowd.play().catch(() => {});
+}
+
+
+
+function hitFX(isCrit) {
+
+  playBoom();
+
+  let emoji = document.createElement("div");
+  emoji.classList.add("hitEmoji");
+
+  let android = document.getElementById("android");
+
+  // SAFETY CHECK (prevents silent failure)
+  if (!android) return;
+
+  let rect = android.getBoundingClientRect();
+
+  emoji.innerText = isCrit ? "💥 CRIT 💥" : "💥";
+
+  // MORE CONSISTENT POSITION (center-left hit zone)
+  emoji.style.left = (rect.left + rect.width * 0.2) + "px";
+  emoji.style.top = (rect.top + rect.height * 0.4) + "px";
+
+  document.body.appendChild(emoji);
+
+  setTimeout(() => {
+    emoji.remove();
+  }, 400);
+}
+
+function showWinnerBubble(text) {
+  let bubble = document.getElementById("winnerBubble");
+
+  bubble.style.opacity = "1";
+  bubble.style.transform = "translateY(0)";
+
+  bubble.innerHTML = "";
+
+  let i = 0;
+
+  let typing = setInterval(() => {
+    bubble.innerHTML += text.charAt(i);
+    i++;
+
+    if (i >= text.length) {
+      clearInterval(typing);
+
+      // 🎬 AFTER typing ends → trigger zoom
+      setTimeout(() => {
+        zoomOnApple();
+      }, 900);
+    }
+  }, 60);
+}
+
+function zoomOnApple() {
+  let iphone = document.getElementById("iphone");
+
+  iphone.style.transition = "transform 1.5s ease";
+  iphone.style.transform = "scale(1.8) rotateY(-10deg)";
+
+  setTimeout(() => {
+  iphone.style.transform = "scale(1) rotateY(-65deg)";
+setTimeout(() => {
+  showAwkwardDrop();
+  playAwkward();
+
+  // 🌑 fade after raindrop
+  setTimeout(() => {
+    fadeToBlack();
+  }, 2000); // delay after drop
+
+}, 8000);
+
+  // 🎉 CROWD + CONFETTI TOGETHER
+  setTimeout(() => {
+    playCrowd();
+    launchConfetti();
+  }, 400);
+
+}, 2500);
+
+}
+
+function launchConfetti() {
+  for (let i = 0; i < 80; i++) {
+
+    let piece = document.createElement("div");
+    piece.classList.add("confetti");
+
+    // random horizontal position
+    piece.style.left = Math.random() * window.innerWidth + "px";
+
+    // random colors
+    let colors = ["#ff2b2b", "#ffffff", "#ffd700", "#00eaff"];
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+
+    // random size
+    piece.style.width = (6 + Math.random() * 6) + "px";
+    piece.style.height = (10 + Math.random() * 10) + "px";
+
+    // random speed
+    piece.style.animationDuration = (2 + Math.random() * 2) + "s";
+
+    document.body.appendChild(piece);
+
+    // cleanup
+    setTimeout(() => {
+      piece.remove();
+    }, 4000);
+  }
+}
+
+function showAwkwardDrop() {
+  let android = document.getElementById("android");
+  let rect = android.getBoundingClientRect();
+
+  let drop = document.createElement("div");
+  drop.classList.add("raindrop");
+  drop.innerText = "💧";
+
+  drop.style.left = (rect.left + rect.width * 0.5) + "px";
+  drop.style.top = (rect.top - 10) + "px";
+
+  document.body.appendChild(drop);
+
+  setTimeout(() => {
+    drop.style.opacity = "1";
+    drop.style.transform = "translateY(10px)";
+  }, 50);
+
+  setTimeout(() => {
+    drop.remove();
+  }, 2000);
+}
+
+function playAwkward() {
+  let vid = document.getElementById("awkwardSound");
+  if (!vid) return; // safety
+
+  vid.currentTime = 0;
+  vid.play().catch(() => {});
+}
+
+
+
+function startGame() {
+
+  // only allow battle after intro finishes
+  
+
+  introDone = true;
+
+  let vs = document.getElementById("vsScreen");
+
+  vs.classList.add("fadeOut");
+
+  setTimeout(() => {
+    vs.remove();
+    startBattle(); // NOW battle starts properly
+  }, 700);
+}
+
+window.onload = () => {
+
+  let vs = document.getElementById("vsScreen");
+
+  // wait 2 seconds (intro display time)
+  setTimeout(() => {
+
+    vs.classList.add("fadeOut");
+
+    // after animation ends → remove + start battle
+    setTimeout(() => {
+      vs.remove();
+      startBattle();
+    }, 700);
+
+  }, 2000);
+
+};
+
+let audioUnlocked = false;
+
+function unlockAudio() {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+
+  // play & pause instantly to unlock
+  if (soundEnabled) audio.play().then(() => {
+    audio.pause();
+    audio.currentTime = 0;
+  }).catch(() => {});
+
+  crowd.play().then(() => {
+    crowd.pause();
+    crowd.currentTime = 0;
+  }).catch(() => {});
+}
+
+document.addEventListener("click", unlockAudio);
+document.addEventListener("touchstart", unlockAudio);
+
+let soundEnabled = false;
+
+document.getElementById("soundToggle").addEventListener("click", () => {
+  soundEnabled = true;
+
+  // unlock all audio
+  if (soundEnabled) audio.play().then(() => {
+    audio.pause();
+    audio.currentTime = 0;
+  }).catch(() => {});
+
+  crowd.play().then(() => {
+    crowd.pause();
+    crowd.currentTime = 0;
+  }).catch(() => {});
+
+  let vid = document.getElementById("awkwardSound");
+  if (vid) {
+    vid.play().then(() => {
+      vid.pause();
+      vid.currentTime = 0;
+    }).catch(() => {});
+  }
+
+  // change text after enabling
+  document.getElementById("soundToggle").innerText = "🔊 Sound On";
+});
+
+function fadeToBlack() {
+  let fade = document.getElementById("blackFade");
+  fade.style.opacity = "1";
+
+  // start text AFTER screen is fully black
+  setTimeout(() => {
+    startStory();
+  }, 1600);
+}
+
+
+function typeText(text, callback) {
+  let box = document.getElementById("storyText");
+
+  box.innerHTML = "";
+  box.style.opacity = "1";
+
+  let i = 0;
+
+  let typing = setInterval(() => {
+    box.innerHTML += text.charAt(i);
+    i++;
+
+    if (i >= text.length) {
+      clearInterval(typing);
+
+      // wait → fade out → next
+      setTimeout(() => {
+        box.style.opacity = "0";
+
+        setTimeout(() => {
+          if (callback) callback();
+        }, 600);
+
+      }, 2000);
+    }
+  }, 50);
+}
+
+function startStory() {
+
+  typeText("what is this? my first sample website", () => {
+
+    typeText("there are many more upcoming, which i intend to sell", () => {
+
+      typeText("refurbished iphone 14 is an investment", () => {
+
+        typeText("to earn money in my own bank account", () => {
+
+          typeText("mind my own business in my own space", () => {
+
+            typeText("and lastly to advertise aesthetically", () => {
+
+              typeText("i'll return the investment with interest", () => {
+
+                typeText("it's just one of the small gigs to improve my resume in future", () => {
+
+                  typeText("it's not impulsive but planned through carefully", () => {
+
+                    typeText("fyi its not full time or for lifetime", () => {
+
+                      // 🎬 FINAL LINE (separate, slower, more impact)
+                      typeText("thank you for watching", () => {
+
+                        // next step 👇 (main page / redirect)
+
+                      }, 4000);
+
+                    }, 3000);
+
+                  });
+
+                });
+
+              });
+
+            });
+
+          });
+
+        });
+
+      });
+
+    });
+
+  });
+
+}
+
+</script>
+
+</body>
+</html>
